@@ -16,7 +16,7 @@ export const insertEventSchema = createInsertSchema(events, {
   id: z.number().optional(),
   name: z.string().max(100),
   type: z.string().max(50),
-  venueId: z.number(),
+  venueId: z.number().optional(),
 });
 
 export const selectEventSchema = createSelectSchema(events);

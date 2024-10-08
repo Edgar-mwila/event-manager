@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 export const venues = pgTable('venues', {
   id: serial('id').primaryKey(),
+  name: varchar('name', { length: 50 }).notNull(),
   capacity: integer('capacity').notNull(),
   province: varchar('province', { length: 50 }).notNull(),
   town: varchar('town', { length: 50 }).notNull(),
