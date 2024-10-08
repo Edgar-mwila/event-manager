@@ -10,7 +10,7 @@ export const sponsors = pgTable('sponsors', {
 });
 
 export const insertSponsorSchema = createInsertSchema(sponsors, {
-  id: z.string().optional(),
+  id: z.number().optional(),
   name: z.string().max(100),
   email: z.string().email(),
   phone: z.string().optional(),

@@ -12,12 +12,12 @@ export const persons = pgTable('persons', {
 });
 
 export const insertPersonSchema = createInsertSchema(persons, {
-  id: z.string().optional(),
+  id: z.number().optional(),
   firstName: z.string().max(50),
   lastName: z.string().max(50),
   dob: z.string(),
   email: z.string().email(),
-  phone: z.string().optional(),
+  phone: z.string(),
 });
 
 export const selectPersonSchema = createSelectSchema(persons);

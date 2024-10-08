@@ -12,7 +12,7 @@ export const venues = pgTable('venues', {
 
 // Insert schema for validation
 export const insertVenueSchema = createInsertSchema(venues, {
-  id: z.string().optional(),
+  id: z.number().optional(),
   capacity: z.number().min(1),
 });
 

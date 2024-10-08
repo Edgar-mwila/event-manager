@@ -12,7 +12,7 @@ export const eventSponsors = pgTable('event_sponsors', {
 });
 
 export const insertEventSponsorSchema = createInsertSchema(eventSponsors, {
-  id: z.string().optional(),
+  id: z.number().optional(),
   sponsorId: z.number(),
   eventId: z.number(),
   sponsorshipAgreement: z.string(),

@@ -1,6 +1,7 @@
 import { pgTable, serial, varchar, integer, timestamp } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
+import { insertVenueSchema as type } from './venue';
 
 export const events = pgTable('events', {
   id: serial('id').primaryKey(),
@@ -12,7 +13,7 @@ export const events = pgTable('events', {
 });
 
 export const insertEventSchema = createInsertSchema(events, {
-  id: z.string().optional(),
+  id: z.number().optional(),
   name: z.string().max(100),
   type: z.string().max(50),
   venueId: z.number(),

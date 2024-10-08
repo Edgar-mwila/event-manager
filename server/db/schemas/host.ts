@@ -9,7 +9,7 @@ export const hosts = pgTable('hosts', {
 });
 
 export const insertHostSchema = createInsertSchema(hosts, {
-  id: z.string().optional(),
+  id: z.number().optional(),
   personId: z.number(),
   eventId: z.number(),
 });

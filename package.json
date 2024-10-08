@@ -13,6 +13,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.4.1",
     "@kinde-oss/kinde-nodejs-sdk": "^1.2.4",
     "@kinde-oss/kinde-typescript-sdk": "^2.9.1",
     "drizzle-orm": "^0.33.0",

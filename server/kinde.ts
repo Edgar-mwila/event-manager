@@ -1,7 +1,6 @@
 import {createKindeServerClient, GrantType, type SessionManager, type UserType} from "@kinde-oss/kinde-typescript-sdk";
 import { type Context } from "hono";
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
-require("dotenv").config();
 import { createFactory, createMiddleware } from 'hono/factory'
 
 // Client for authorization code flow

@@ -1,57 +1,61 @@
-import { Hono } from 'hono';
-import { db } from '../db'; // Import your DB setup
-import { insertTicketSchema, updateTicketSchema } from '../db//schemas/ticket';
-import { persons, attendees } from '../db/schemas';
+import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { db } from "../db";
+import { attendees, insertAttendeeSchema } from "../db/schemas/attendee";
+import { persons, insertPersonSchema } from "../db/schemas/person";
+import { eq } from "drizzle-orm";
+import { events } from '../db/schemas/events';
 
-// Initialize router
-const tickets = new Hono();
+export const ticketRoutes = new Hono()
+  // See all tickets for event (joined with persons)
+  .get("/:eventId/tickets", async (c) => {
+    const eventId = Number(c.req.param("eventId"));
+    const event = await db.select().from(events).where(eq(events.id, eventId)).then((res) => res[0]);
+    const tickets = await db
+      .select({
+        attendee: attendees,
+        person: persons,
+      })
+      .from(attendees)
+      .innerJoin(persons, eq(attendees.personId, persons.id))
+      .where(eq(attendees.ticketStamp, event.ticketStamp));
 
-// Buy ticket route
-tickets.post('/buy', async (c) => {
-  try {
-    const ticketData = insertTicketSchema.parse(c.req.body);
+    return c.json({ tickets });
+  })
 
-    // Check for duplicate person using email
-    const existingPerson = await db.select().from(persons).where(persons.email.eq(ticketData.email));
+  // Buy ticket (with person and attendee logic)
+  .post("/:eventId/ticket", zValidator("json", insertPersonSchema), async (c) => {
+    const eventId = Number(c.req.param("eventId"));
+    const event = await db.select().from(events).where(eq(events.id, eventId)).then((res) => res[0]);
+    const personData = c.req.valid("json");
+    const validPerson = insertPersonSchema.parse(personData)
+    // Insert person (or check for duplicate via email)
+    const person = await db.insert(persons).values(validPerson).onConflictDoNothing().returning().then((res) => res[0]);
 
-    let personId;
-    if (existingPerson.length === 0) {
-      // Insert new person if no duplicates
-      const [person] = await db.insert(persons).values(ticketData).returning(persons.id);
-      personId = person.id;
-    } else {
-      personId = existingPerson[0].id;
-    }
+    // Insert attendee with event ID and person ID
+    const attendee = {
+      personId: person.id as number,
+      ticketStamp: event.ticketStamp,
+    };
+    const newAttendee = await db.insert(attendees).values(attendee).returning().then((res) => res[0]);
 
-    // Insert into attendee table
-    await db.insert(attendees).values({ personId, eventId: ticketData.eventId, ticketStamp: ticketData.ticketStamp });
-    return c.json({ message: 'Ticket purchased successfully!' });
-  } catch (err) {
-    return c.json({ error: err.message }, 400);
-  }
-});
+    return c.json({ newAttendee });
+  })
 
-// Return ticket route (delete)
-tickets.delete('/return/:ticketId', async (c) => {
-  const ticketId = c.req.param('ticketId');
-  await db.delete(attendees).where(attendees.id.eq(ticketId));
-  return c.json({ message: 'Ticket returned successfully!' });
-});
+  // Return ticket (delete from attendees)
+  .delete("/:ticketId", async (c) => {
+    const ticketId = Number(c.req.param("ticketId"));
+    const deleted = await db.delete(attendees).where(eq(attendees.id, ticketId)).returning().then((res) => res[0]);
+    if (!deleted) return c.notFound();
+    return c.json({ deleted });
+  })
 
-// Edit ticket route
-tickets.put('/edit/:ticketId', async (c) => {
-  try {
-    const ticketData = updateTicketSchema.parse(c.req.body);
-    const ticketId = c.req.param('ticketId');
+  // Edit ticket (update person and attendee details)
+  .patch("/:ticketId", zValidator("json", insertAttendeeSchema), async (c) => {
+    const ticketId = Number(c.req.param("ticketId"));
+    const data = c.req.valid("json");
 
-    // Update person and ticket details
-    await db.update(persons).set(ticketData.person).where(persons.id.eq(ticketData.personId));
-    await db.update(attendees).set({ ticketStamp: ticketData.ticketStamp }).where(attendees.id.eq(ticketId));
-
-    return c.json({ message: 'Ticket updated successfully!' });
-  } catch (err) {
-    return c.json({ error: err.message }, 400);
-  }
-});
-
-export default tickets;
+    const updated = await db.update(attendees).set(data).where(eq(attendees.id, ticketId)).returning().then((res) => res[0]);
+    if (!updated) return c.notFound();
+    return c.json({ updated });
+  });
