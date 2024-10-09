@@ -7,7 +7,7 @@ import { invitationRoutes } from './routes/invitation';
 const app = new Hono()
 
 app.use(logger())
-const apiRoutes = app.basePath('/api').route("/auth", authRoutes).route("/events", eventsRoutes).route("/events", invitationRoutes).route("/events", ticketRoutes)
+const apiRoutes = app.basePath('/api').route("/auth", authRoutes).route("/events", eventsRoutes).route("/invitations", invitationRoutes).route("/tickets", ticketRoutes)
 
 export default app
 export type ApiRoutes = typeof apiRoutes

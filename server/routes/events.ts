@@ -10,6 +10,7 @@ import { eventSponsors } from '../db/schemas/event_sponsor';
 import { and, eq } from "drizzle-orm";
 import { z } from 'zod';
 import { invitedGuests } from '../db/schemas/invited_guest';
+import { getUser } from '../kinde';
 
 // Initialize router
 const eventsRouter = new Hono();
@@ -55,7 +56,7 @@ eventsRouter.get('/:eventId', async (c) => {
 });
 
 // Create new event
-eventsRouter.post('/', async (c) => {
+eventsRouter.post('/', getUser, async (c) => {
   try {
     const extendedInsertEventSchema = insertEventSchema.extend({
       venue: z.object({
@@ -152,7 +153,7 @@ eventsRouter.post('/', async (c) => {
 });
 
 // Edit event
-eventsRouter.put('/:eventId', async (c) => {
+eventsRouter.put('/:eventId', getUser, async (c) => {
   try {
     const eventId = parseInt(c.req.param('eventId'));
     if (isNaN(eventId)) {
@@ -170,30 +171,65 @@ eventsRouter.put('/:eventId', async (c) => {
 });
 
 // Delete event
-eventsRouter.delete('/:eventId', async (c) => {
+eventsRouter.delete('/:eventId', getUser, async (c) => {
   try {
     const eventId = parseInt(c.req.param('eventId'));
     if (isNaN(eventId)) {
       return c.json({ error: 'Invalid event ID' }, 400);
     }
-    const event = await db.select().from(events).where(eq(events.id, eventId)).then((res) => res[0])
-    // Delete related records
-    await db.delete(eventSponsors).where(eq(eventSponsors.eventId, eventId));
-    await db.delete(hosts).where(eq(hosts.eventId, eventId));
-    await db.delete(attendees).where(eq(attendees.ticketStamp, event.ticketStamp));
-    await db.delete(invitedGuests).where(eq(invitedGuests.invitationStamp, event.invitationStamp));
-    
-    // Delete the event itself
-    const result = await db.delete(events).where(eq(events.id, eventId)).returning();
 
-    if (result.length === 0) {
+    // Fetch the event
+    const event = await db.select().from(events).where(eq(events.id, eventId)).then((res) => res[0]);
+    if (!event) {
       return c.json({ error: 'Event not found' }, 404);
     }
 
-    return c.json({ message: 'Event and related records deleted successfully!' });
+    // Start a transaction
+    await db.transaction(async (tx) => {
+      // Delete event sponsors and referenced sponsors
+      const eventSponsorsToDelete = await tx.select({ sponsorId: eventSponsors.sponsorId })
+        .from(eventSponsors)
+        .where(eq(eventSponsors.eventId, eventId));
+      await tx.delete(eventSponsors).where(eq(eventSponsors.eventId, eventId));
+      for (const { sponsorId } of eventSponsorsToDelete) {
+        await tx.delete(sponsors).where(eq(sponsors.id, sponsorId));
+      }
+
+      // Delete hosts and referenced persons
+      const hostsToDelete = await tx.select({ personId: hosts.personId })
+        .from(hosts)
+        .where(eq(hosts.eventId, eventId));
+      await tx.delete(hosts).where(eq(hosts.eventId, eventId));
+      for (const { personId } of hostsToDelete) {
+        await tx.delete(persons).where(eq(persons.id, personId));
+      }
+
+      // Delete attendees and referenced persons
+      const attendeesToDelete = await tx.select({ personId: attendees.personId })
+        .from(attendees)
+        .where(eq(attendees.ticketStamp, event.ticketStamp));
+      await tx.delete(attendees).where(eq(attendees.ticketStamp, event.ticketStamp));
+      for (const { personId } of attendeesToDelete) {
+        await tx.delete(persons).where(eq(persons.id, personId));
+      }
+
+      // Delete invited guests and referenced persons
+      const invitedGuestsToDelete = await tx.select({ personId: invitedGuests.personId })
+        .from(invitedGuests)
+        .where(eq(invitedGuests.invitationStamp, event.invitationStamp));
+      await tx.delete(invitedGuests).where(eq(invitedGuests.invitationStamp, event.invitationStamp));
+      for (const { personId } of invitedGuestsToDelete) {
+        await tx.delete(persons).where(eq(persons.id, personId));
+      }
+
+      // Finally, delete the event itself
+      await tx.delete(events).where(eq(events.id, eventId));
+    });
+
+    return c.json({ message: 'Event and all related records deleted successfully!' });
   } catch (err) {
     console.error(err);
-    return c.json({ error: "An error occurred while deleting the event." }, 400);
+    return c.json({ error: "An error occurred while deleting the event and related records." }, 400);
   }
 });
 
