@@ -9,7 +9,8 @@ export default function configureOpenAPI(app: AppOpenAPI) {
     openapi: "3.0.0",
     info: {
       version: packageJSON.version,
-      title: "Tasks API",
+      title: 'Event Manager API',
+      description: 'API for managing events, tickets, and invitations',  
     },
   });
 
@@ -17,7 +18,6 @@ export default function configureOpenAPI(app: AppOpenAPI) {
     "/reference",
     apiReference({
       theme: "kepler",
-      layout: "classic",
       defaultHttpClient: {
         targetKey: "javascript",
         clientKey: "fetch",
