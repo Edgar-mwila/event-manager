@@ -18,12 +18,37 @@ import { createRouter } from "../libs/create-app";
 
 const eventsRouter = createRouter();
 
+// total number of events
+eventsRouter.openapi(
+  createRoute({
+    tags: ["All events"],
+    method: "get",
+    path: "events/total",
+    responses: {
+      [HttpStatusCodes.OK]: {
+        content: {
+          "application/json": {
+            schema: z.object({
+              totalEvents: z.number(),
+            }),
+          },
+        },
+        description: "Total number of events",
+      },
+    },
+  }),
+  async (c) => {
+    const allEvents = await db.select().from(events);
+    return c.json({ totalEvents: allEvents.length }, HttpStatusCodes.OK);
+  },
+);
+
 // List all events
 eventsRouter.openapi(
   createRoute({
     tags: ["Events"],
     method: "get",
-    path: "/",
+    path: "events",
     responses: {
       [HttpStatusCodes.OK]: jsonContent(
         z.array(z.object({
@@ -49,7 +74,7 @@ eventsRouter.openapi(
   createRoute({
     tags: ["Events"],
     method: "get",
-    path: "/:eventId",
+    path: "events/:eventId",
     request: {
       params: z.object({
         eventId: z.string(),
@@ -143,7 +168,7 @@ eventsRouter.openapi(
   createRoute({
     tags: ["Events"],
     method: "post",
-    path: "/",
+    path: "events",
     middleware: getUser,
     request: {
       body: {
@@ -293,7 +318,7 @@ eventsRouter.openapi(
   createRoute({
     tags: ["Events"],
     method: "put",
-    path: "/:eventId",
+    path: "events/:eventId",
     middleware: getUser,
     request: {
       params: z.object({
@@ -334,7 +359,7 @@ eventsRouter.openapi(
   createRoute({
     tags: ["Events"],
     method: "delete",
-    path: "/:eventId",
+    path: "events/:eventId",
     middleware: getUser,
     request: {
       params: z.object({

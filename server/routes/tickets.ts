@@ -70,7 +70,7 @@ ticketsRouter.openapi(
   createRoute({
     tags: ["Tickets"],
     method: "post",
-    path: "/:eventId/ticket",
+    path: "events/:eventId/ticket",
     request: {
       body: {
         content: {

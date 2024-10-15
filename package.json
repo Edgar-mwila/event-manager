@@ -8,6 +8,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/node": "^22.7.5",
     "drizzle-kit": "^0.24.2"
   },
   "peerDependencies": {
