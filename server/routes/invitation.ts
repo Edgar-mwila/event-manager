@@ -16,7 +16,7 @@ invitationsRouter.openapi(
   createRoute({
     tags: ["Invitations"],
     method: "get",
-    path: "/:eventId/invites",
+    path: "events/:eventId/invites",
     middleware: getUser,
     responses: {
       [HttpStatusCodes.OK]: {
@@ -68,7 +68,7 @@ invitationsRouter.openapi(
   createRoute({
     tags: ["Invitations"],
     method: "post",
-    path: "/:eventId/invite",
+    path: "events/:eventId/invite",
     middleware: getUser,
     request: {
       body: {

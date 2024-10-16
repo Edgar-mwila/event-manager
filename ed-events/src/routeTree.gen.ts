@@ -11,12 +11,19 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as CreateEventImport } from './routes/create-event'
 import { Route as IndexImport } from './routes/index'
 import { Route as EventsIndexImport } from './routes/events/index'
 import { Route as EventsEventIdImport } from './routes/events/$eventId'
 import { Route as EventsEventIdTicketImport } from './routes/events/_.$eventId.ticket'
+import { Route as EventsEventIdInviteImport } from './routes/events/_.$eventId.invite'
 
 // Create/Update Routes
+
+const CreateEventRoute = CreateEventImport.update({
+  path: '/create-event',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const IndexRoute = IndexImport.update({
   path: '/',
@@ -38,6 +45,11 @@ const EventsEventIdTicketRoute = EventsEventIdTicketImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const EventsEventIdInviteRoute = EventsEventIdInviteImport.update({
+  path: '/events/$eventId/invite',
+  getParentRoute: () => rootRoute,
+} as any)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -47,6 +59,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/create-event': {
+      id: '/create-event'
+      path: '/create-event'
+      fullPath: '/create-event'
+      preLoaderRoute: typeof CreateEventImport
       parentRoute: typeof rootRoute
     }
     '/events/$eventId': {
@@ -63,6 +82,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsIndexImport
       parentRoute: typeof rootRoute
     }
+    '/events//$eventId/invite': {
+      id: '/events//$eventId/invite'
+      path: '/events/$eventId/invite'
+      fullPath: '/events/$eventId/invite'
+      preLoaderRoute: typeof EventsEventIdInviteImport
+      parentRoute: typeof rootRoute
+    }
     '/events//$eventId/ticket': {
       id: '/events//$eventId/ticket'
       path: '/events/$eventId/ticket'
@@ -77,51 +103,75 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/create-event': typeof CreateEventRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events': typeof EventsIndexRoute
+  '/events/$eventId/invite': typeof EventsEventIdInviteRoute
   '/events/$eventId/ticket': typeof EventsEventIdTicketRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/create-event': typeof CreateEventRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events': typeof EventsIndexRoute
+  '/events/$eventId/invite': typeof EventsEventIdInviteRoute
   '/events/$eventId/ticket': typeof EventsEventIdTicketRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/create-event': typeof CreateEventRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/': typeof EventsIndexRoute
+  '/events//$eventId/invite': typeof EventsEventIdInviteRoute
   '/events//$eventId/ticket': typeof EventsEventIdTicketRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/events/$eventId' | '/events' | '/events/$eventId/ticket'
+  fullPaths:
+    | '/'
+    | '/create-event'
+    | '/events/$eventId'
+    | '/events'
+    | '/events/$eventId/invite'
+    | '/events/$eventId/ticket'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/events/$eventId' | '/events' | '/events/$eventId/ticket'
+  to:
+    | '/'
+    | '/create-event'
+    | '/events/$eventId'
+    | '/events'
+    | '/events/$eventId/invite'
+    | '/events/$eventId/ticket'
   id:
     | '__root__'
     | '/'
+    | '/create-event'
     | '/events/$eventId'
     | '/events/'
+    | '/events//$eventId/invite'
     | '/events//$eventId/ticket'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CreateEventRoute: typeof CreateEventRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
   EventsIndexRoute: typeof EventsIndexRoute
+  EventsEventIdInviteRoute: typeof EventsEventIdInviteRoute
   EventsEventIdTicketRoute: typeof EventsEventIdTicketRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CreateEventRoute: CreateEventRoute,
   EventsEventIdRoute: EventsEventIdRoute,
   EventsIndexRoute: EventsIndexRoute,
+  EventsEventIdInviteRoute: EventsEventIdInviteRoute,
   EventsEventIdTicketRoute: EventsEventIdTicketRoute,
 }
 
@@ -138,19 +188,27 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/create-event",
         "/events/$eventId",
         "/events/",
+        "/events//$eventId/invite",
         "/events//$eventId/ticket"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
+    "/create-event": {
+      "filePath": "create-event.tsx"
+    },
     "/events/$eventId": {
       "filePath": "events/$eventId.tsx"
     },
     "/events/": {
       "filePath": "events/index.tsx"
+    },
+    "/events//$eventId/invite": {
+      "filePath": "events/_.$eventId.invite.tsx"
     },
     "/events//$eventId/ticket": {
       "filePath": "events/_.$eventId.ticket.tsx"

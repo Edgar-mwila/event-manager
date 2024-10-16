@@ -18,7 +18,7 @@ ticketsRouter.openapi(
   createRoute({
     tags: ["Tickets"],
     method: "get",
-    path: "/:eventId/tickets",
+    path: "events/:eventId/tickets",
     middleware: getUser,
     responses: {
       [HttpStatusCodes.OK]: {

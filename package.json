@@ -7,6 +7,7 @@
     "dev": "bun server/index.ts --watch"
   },
   "devDependencies": {
+    "@flydotio/dockerfile": "^0.5.9",
     "@types/bun": "latest",
     "@types/node": "^22.7.5",
     "drizzle-kit": "^0.24.2"

@@ -4,8 +4,9 @@ import { motion } from 'framer-motion';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Sparkles, Calendar, Users, Music, LucideIcon, LogIn } from 'lucide-react';
+import { Sparkles, Calendar, Users, Music, LucideIcon, LogIn, LogOut } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { userQueryOptions } from '@/api';
 
 interface EventCardProps {
   icon: LucideIcon;
@@ -35,6 +36,7 @@ const fetchTotalEvents = async () => {
 }
 
 const EdEventsLandingPage = () => {
+  const { data: user } = useQuery(userQueryOptions);
   const {
     data: eventsCount,
     isLoading,
@@ -55,8 +57,16 @@ const EdEventsLandingPage = () => {
         <div className="container mx-auto flex justify-between items-center">
           <Link to="/" className="text-2xl font-bold text-primary">ed-Events</Link>
           <Button variant="ghost" size="sm" className="text-gray-600 hover:text-primary">
-            <LogIn className="mr-2 h-4 w-4" />
-            Staff Login
+            {user ? 
+              <a href='/api/logout' className='flex flex-row justify-center'>
+                <LogOut className="mr-2 h-4 w-4" />
+                Log Out
+              </a>
+            : 
+              <a href='/api/login' className='flex flex-row justify-center'>
+                <LogIn className="mr-2 h-4 w-4" />
+                Staff Login
+              </a>}
           </Button>
         </div>
       </nav>
