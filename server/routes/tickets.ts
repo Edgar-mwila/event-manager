@@ -49,7 +49,7 @@ ticketsRouter.openapi(
   async (c) => {
     const eventId = Number(c.req.param("eventId"));
     const event = await db.select().from(events).where(eq(events.id, eventId)).then((res) => res[0]);
-    
+
     if (!event) return c.json({ error: "Event not found" }, HttpStatusCodes.NOT_FOUND);
 
     const tickets = await db
@@ -148,7 +148,7 @@ ticketsRouter.openapi(
   createRoute({
     tags: ["Tickets"],
     method: "delete",
-    path: "/:ticketId",
+    path: "/tickets/:ticketId",
     responses: {
       [HttpStatusCodes.OK]: {
         content: {
@@ -189,7 +189,7 @@ ticketsRouter.openapi(
   createRoute({
     tags: ["Tickets"],
     method: "patch",
-    path: "/:ticketId",
+    path: "/tickets/:ticketId",
     request: {
       body: {
         content: {
@@ -256,7 +256,7 @@ ticketsRouter.openapi(
       const ticketId = Number(c.req.param("ticketId"));
       const data = await c.req.json();
       console.log(data);
-  
+
       const extendInsertAttendeeSchema = insertAttendeeSchema.extend({
         person: z.object({
           firstName: z.string().optional(),
@@ -266,25 +266,25 @@ ticketsRouter.openapi(
           phone: z.string().optional(),
         }).optional(),
       }).partial();
-  
+
       const validData = extendInsertAttendeeSchema.parse(data);
-  
+
       const updatedAttendee = await db
         .update(attendees)
         .set(validData)
         .where(eq(attendees.id, ticketId))
         .returning()
         .then((res) => res[0]);
-  
+
       if (!updatedAttendee) return c.json({ error: 'Attendee not found' }, HttpStatusCodes.NOT_FOUND);
-  
+
       if (validData.person) {
         await db
           .update(persons)
           .set(validData.person)
           .where(eq(persons.id, updatedAttendee.personId));
       }
-  
+
       return c.json({ updatedAttendee }, HttpStatusCodes.OK);
     } catch (error) {
       if (error instanceof z.ZodError) {

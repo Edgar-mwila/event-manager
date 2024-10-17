@@ -50,6 +50,7 @@ const AllEvents: React.FC = () => {
   } = useQuery<Event[], Error>({
     queryKey: ['events'],
     queryFn: fetchEvents,
+    staleTime: 5 * 60 * 1000,
   })
 
   if (isLoading) return <EventsSkeleton />

@@ -2,16 +2,14 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { PlusCircle, MinusCircle } from 'lucide-react';
-
-// Correct shadcn imports
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { 
+import {
   Form,
   FormControl,
   FormField,
@@ -19,7 +17,7 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form";
-import { 
+import {
   Card,
   CardContent,
   CardDescription,
@@ -63,6 +61,7 @@ const createEventSchema = z.object({
 type CreateEventFormData = z.infer<typeof createEventSchema>;
 
 function CreateEvent() {
+  const queryClient = useQueryClient();
   const form = useForm<CreateEventFormData>({
     resolver: zodResolver(createEventSchema),
     defaultValues: {
@@ -81,21 +80,46 @@ function CreateEvent() {
         },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to create event");
       }
 
       return response.json();
     },
+    onMutate: async (newEvent) => {
+      // Cancel any outgoing fetches for 'events' to avoid race conditions
+      await queryClient.cancelQueries({ queryKey: ['events'] });
+
+      // Get the current cached events
+      const previousEvents = queryClient.getQueryData<Event[]>(['events']);
+
+      // Optimistically update the cache by adding the new event
+      queryClient.setQueryData(['events'], (oldEvents: Event[] | undefined) => {
+        return [...(oldEvents || []), newEvent];
+      });
+
+      // Return context object with the previous events, in case of rollback
+      return { previousEvents };
+    },
+    onError: (error, newEvent, context) => {
+      // Rollback to the previous events in case of error
+      if (context?.previousEvents) {
+        queryClient.setQueryData(['events'], context.previousEvents);
+      }
+      toast.error(error.message);
+    },
     onSuccess: (data) => {
+      // Show success message with the event ID
       toast.success(`Event created successfully with ID: ${data.eventId}`);
     },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    }
+    onSettled: () => {
+      // Refetch the events to ensure data consistency after the mutation
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
   });
 
+  // Form submission handler to create an event
   const onSubmit = (data: CreateEventFormData) => {
     setLoading(true);
     createEventMutation.mutate(data, {

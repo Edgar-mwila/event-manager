@@ -119,9 +119,9 @@ invitationsRouter.openapi(
   async (c) => {
     const eventId = Number(c.req.param("eventId"));
     const personData = c.req.valid("json");
-    
+
     const event = await db.select().from(events).where(eq(events.id, eventId)).then((res) => res[0]);
-    
+
     if (!event) return c.json({ error: 'Event not found' }, HttpStatusCodes.NOT_FOUND);
 
     const person = await db
@@ -153,7 +153,7 @@ invitationsRouter.openapi(
   createRoute({
     tags: ["Invitations"],
     method: "delete",
-    path: "/:invitationId",
+    path: "/invitations/:invitationId",
     middleware: getUser,
     responses: {
       [HttpStatusCodes.OK]: {
@@ -201,7 +201,7 @@ invitationsRouter.openapi(
   createRoute({
     tags: ["Invitations"],
     method: "patch",
-    path: "/:invitationId",
+    path: "/invitations/:invitationId",
     request: {
       body: {
         content: {

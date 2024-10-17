@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -36,6 +37,7 @@ const purchaseTicket = async (
 }
 
 const TicketPurchasePage = () => {
+  const queryClient = useQueryClient();
   const { eventId } = Route.useParams()
   const navigate = useNavigate()
   const form = useForm<z.infer<typeof formSchema>>({
@@ -52,7 +54,13 @@ const TicketPurchasePage = () => {
   const mutation = useMutation({
     mutationFn: (data: z.infer<typeof formSchema>) =>
       purchaseTicket(eventId, data),
-    onSuccess: () => {
+    onSuccess: async (data) => {
+      await queryClient.cancelQueries({ queryKey: ['tickets', eventId] });
+
+      queryClient.setQueryData(['tickets', eventId], (oldData: any) => ({
+        tickets: [...(oldData?.tickets || []), data], // Optimistically add the new ticket
+      }));
+
       toast('Ticket Purchased', {
         description: 'Your ticket has been successfully purchased.',
       })
@@ -150,7 +158,7 @@ const TicketPurchasePage = () => {
               />
               <div className="text-center">
                 <Button type="submit" size="lg" disabled={mutation.isPending}>
-                  {mutation.isPending ? 'Purchasing...' : 'Purchase Ticket' }
+                  {mutation.isPending ? 'Purchasing...' : 'Purchase Ticket'}
                 </Button>
               </div>
             </form>
